@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Text Generator</title>
+    <style>
+      /* Global Styles */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(to right, #e0f7fa, #ffffff);
+        color: #333;
+        text-align: center;
+        padding: 40px 20px;
+        opacity: 0;
+        animation: pageJump 1s forwards ease-out;
+      }
+
+      @keyframes pageJump {
+        0% {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .icon {
+        font-size: 50px;
+        color: #3498db;
+        margin-top: 10px;
+      }
+
+      /* Styling for the two lines with jumping letter effect */
+      h1,
+      p {
+        display: block;
+        font-size: 2.5em;
+        line-height: 1.4;
+        margin: 20px 0;
+      }
+
+      h1 span,
+      p span {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: jump 0.5s ease-in-out forwards;
+      }
+
+      h1 span {
+        animation-delay: 0.1s;
+      }
+
+      p span {
+        animation-delay: 0.1s;
+      }
+
+      @keyframes jump {
+        0% {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      h1 {
+        color: #6a11cb;
+      }
+
+      p {
+        font-size: 1.5em;
+        color: #2575fc;
+      }
+
+      /* Input container and dropdown styles */
+      .input-container {
+        margin: 20px 0;
+      }
+
+      .input-container input {
+        width: 80%;
+        padding: 15px;
+        font-size: 1.2em;
+        border: 2px solid #3498db;
+        border-radius: 10px;
+        outline: none;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+
+      .input-container input:focus {
+        border-color: #2980b9;
+        box-shadow: 0 4px 8px rgba(41, 128, 185, 0.2);
+      }
+
+      .dropdown-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .dropdown {
+        padding: 12px 15px;
+        font-size: 1em;
+        border: 2px solid #3498db;
+        border-radius: 8px;
+        background-color: #f0f4f8;
+        color: #333;
+        cursor: pointer;
+        transition: all 0.3s;
+        width: 25%;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .dropdown:hover {
+        background-color: #3498db;
+        color: #ffffff;
+        box-shadow: 0 6px 15px rgba(41, 128, 185, 0.3);
+        transform: scale(1.05);
+      }
+
+      /* Generate Button */
+      .generate-btn {
+        padding: 15px 30px;
+        font-size: 1.5em;
+        border: none;
+        border-radius: 30px;
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        color: #fff;
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 10px 20px rgba(106, 17, 203, 0.2);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .generate-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 12px 25px rgba(106, 17, 203, 0.4);
+      }
+
+      /* Pop-up message style with pop-up animation */
+      .alert {
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 1.2em;
+        box-shadow: 0 4px 8px rgba(41, 128, 185, 0.2);
+        display: none;
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        animation: popupGrow 0.5s ease-out forwards;
+      }
+
+      @keyframes popupGrow {
+        0% {
+          opacity: 0;
+          transform: translateX(-50%) scale(0.5);
+        }
+        100% {
+          opacity: 1;
+          transform: translateX(-50%) scale(1.1);
+        }
+      }
+
+      /* CSS for Animation and Output Box */
+
+      /* Style for the output box where the generated text appears */
+      .output-box {
+        margin-top: 30px;
+        padding: 20px;
+        font-size: 1.2em;
+        color: #fff;
+        background: linear-gradient(
+          to right,
+          #2575fc,
+          #6a11cb
+        ); /* Gradient background */
+        border-radius: 10px; /* Rounded corners */
+        box-shadow: 0 10px 20px rgba(106, 17, 203, 0.3); /* Shadow for depth */
+        max-width: 80%;
+        margin-left: auto;
+        margin-right: auto;
+        overflow: hidden; /* Hide content that overflows */
+        text-align: left; /* Left-aligned text */
+        white-space: pre-wrap; /* Preserve line breaks */
+        opacity: 0; /* Initially hidden */
+        transform: translateY(20px); /* Start off-screen */
+        transition: opacity 1s ease-out, transform 1s ease-out; /* Smooth transition for fade-in and slide-in */
+      }
+
+      /* Add show class to reveal the output box with animation */
+      .output-box.show {
+        opacity: 1;
+        transform: translateY(0); /* Move into position */
+      }
+
+      /* Style for generated text */
+      .generated-text {
+        font-family: "Roboto", sans-serif; /* Modern, clean font */
+        line-height: 1.6; /* Better readability with line-height */
+        font-weight: 400; /* Regular font weight */
+        white-space: pre-wrap; /* Preserve line breaks */
+        word-wrap: break-word; /* Break long words to fit within box */
+        display: inline-block; /* Keep the text inline for animation */
+        overflow: hidden; /* Hide overflowed text during animation */
+        letter-spacing: 0.5px; /* Slight letter spacing for neatness */
+      }
+
+      /* Animation for the individual text characters */
+      .generated-text span {
+        opacity: 0;
+        transform: translateY(20px); /* Start with text offscreen */
+        display: inline-block; /* Keep each letter in its own block for animation */
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+
+      /* Add delayed animation effect to each span */
+      .generated-text span.animate {
+        opacity: 1;
+        transform: translateY(0); /* Move text into position */
+      }
+
+      /* Optional - animation on initial page load for headers and paragraphs */
+      h1 span,
+      p span {
+        display: inline-block;
+        opacity: 0;
+        transform: translateY(20px); /* Start text offscreen */
+        transition: opacity 0.5s ease, transform 0.5s ease;
+      }
+
+      /* Reveal animation for header and paragraph */
+      h1 span.animate,
+      p span.animate {
+        opacity: 1;
+        transform: translateY(0); /* Move text into view */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="icon">📄</div>
+    <h1>
+      <span>A</span>
+      <span>I</span>
+      <span> </span>
+      <span>T</span>
+      <span>e</span>
+      <span>x</span>
+      <span>t</span>
+      <span> </span>
+      <span>G</span>
+      <span>e</span>
+      <span>n</span>
+      <span>e</span>
+      <span>r</span>
+      <span>a</span>
+      <span>t</span>
+      <span>o</span>
+      <span>r</span>
+    </h1>
+    <p>
+      <span>A</span>
+      <span>I</span>
+      <span> </span>
+      <span>t</span>
+      <span>e</span>
+      <span>x</span>
+      <span>t</span>
+      <span> </span>
+      <span>b</span>
+      <span>a</span>
+      <span>s</span>
+      <span>e</span>
+      <span>d</span>
+      <span> </span>
+      <span>o</span>
+      <span>n</span>
+      <span> </span>
+      <span>y</span>
+      <span>o</span>
+      <span>u</span>
+      <span>r</span>
+      <span> </span>
+      <span>p</span>
+      <span>r</span>
+      <span>e</span>
+      <span>f</span>
+      <span>e</span>
+      <span>r</span>
+      <span>e</span>
+      <span>n</span>
+      <span>c</span>
+      <span>e</span>
+      <span>s</span>
+      <span>!</span>
+    </p>
+
+    <div class="input-container">
+      <input type="text" id="prompt" placeholder="Enter your prompt" />
+    </div>
+
+    <div class="dropdown-container">
+      <select id="purpose" class="dropdown">
+        <option value="">Select Purpose</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Content Creation">Content Creation</option>
+        <option value="Social Media">Social Media</option>
+      </select>
+
+      <select id="tone" class="dropdown">
+        <option value="">Select Tone</option>
+        <option value="Friendly">Friendly</option>
+        <option value="Formal">Formal</option>
+        <option value="Persuasive">Persuasive</option>
+      </select>
+
+      <select id="length" class="dropdown">
+        <option value="">Select Length</option>
+        <option value="Short">Short</option>
+        <option value="Medium">Medium</option>
+        <option value="Long">Long</option>
+      </select>
+    </div>
+
+    <button class="generate-btn" onclick="generateText()">Generate Text</button>
+
+    <div class="output-box" id="outputBox"></div>
+
+    <!-- The Alert will show as a popup -->
+    <div class="alert" id="alertMessage">Please fill in all fields.</div>
+
+    <script>
+      window.addEventListener("load", () => {
+        document.body.classList.add("loaded");
+        animateText(); // Start letter animation on page load
+      });
+
+      function animateText() {
+        const text1 = document.querySelectorAll("h1 span");
+        const text2 = document.querySelectorAll("p span");
+        setTimeout(() => {
+          text1.forEach((span, index) => {
+            span.style.animationDelay = `${index * 0.1}s`;
+            span.style.opacity = 1;
+            span.style.transform = "translateY(0)";
+          });
+
+          text2.forEach((span, index) => {
+            span.style.animationDelay = `${index * 0.1}s`;
+            span.style.opacity = 1;
+            span.style.transform = "translateY(0)";
+          });
+        }, 500); // Start after a short delay
+      }
+
+      function generateText() {
+        const prompt = document.getElementById("prompt").value.trim();
+        const purpose = document.getElementById("purpose").value;
+        const tone = document.getElementById("tone").value;
+        const length = document.getElementById("length").value;
+        const outputBox = document.getElementById("outputBox");
+        const alertMessage = document.getElementById("alertMessage");
+
+        // Debugging output
+        console.log("Prompt:", prompt);
+        console.log("Purpose:", purpose);
+        console.log("Tone:", tone);
+        console.log("Length:", length);
+
+        // Check if all fields are filled out
+        if (!prompt || purpose === "" || tone === "" || length === "") {
+          outputBox.innerHTML = "";
+          alertMessage.style.display = "block"; // Show alert if fields are missing
+          console.log("Alert displayed: Some fields are missing.");
+          setTimeout(() => {
+            alertMessage.style.display = "none"; // Hide alert after 3 seconds
+          }, 3000);
+          return;
+        }
+
+        // Clear the alert message if all fields are filled
+        alertMessage.style.display = "none";
+
+        // Make the fetch request to the backend
+        fetch("/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: prompt,
+            max_length:
+              length === "Short" ? 600 : length === "Medium" ? 700 : 800,
+            temperature:
+              tone === "Friendly" ? 0.7 : tone === "Formal" ? 0.9 : 1.2,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.generated_text) {
+              outputBox.innerHTML = `<div class="generated-text">${data.generated_text}</div>`;
+              outputBox.classList.add("show");
+              animateGeneratedText();
+            } else {
+              outputBox.innerHTML = "An error occurred!";
+            }
+          })
+          .catch((error) => {
+            outputBox.innerHTML = "Error: " + error.message;
+          });
+      }
+
+      // Function to animate the text in a typewriter-like fashion
+      function animateGeneratedText() {
+        const generatedText = document.querySelector(".generated-text");
+        let index = 0;
+        const text = generatedText.textContent;
+        generatedText.textContent = ""; // Clear text content initially
+
+        const interval = setInterval(() => {
+          generatedText.textContent += text[index];
+          index++;
+          if (index === text.length) {
+            clearInterval(interval); // Stop animation when all text is displayed
+          }
+        }, 40); // Adjust typing speed by changing the interval (ms)
+      }
+    </script>
+  </body>
+</html>
